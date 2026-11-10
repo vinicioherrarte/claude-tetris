@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tetris</title>
+  <script>
+    // Aplica el tema antes del primer render para evitar un parpadeo.
+    (function () {
+      var theme = null;
+      try { theme = localStorage.getItem('tetris-theme'); } catch (e) {}
+      if (theme !== 'light' && theme !== 'dark') {
+        theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -40,6 +51,8 @@
             <li><kbd>P</kbd> pausa</li>
           </ul>
         </div>
+
+        <button id="theme-btn" type="button">Modo claro</button>
       </aside>
     </div>
 

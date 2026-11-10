@@ -39,8 +39,10 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const themeBtn = document.getElementById('theme-btn');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let gridColor = '#22222e';
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -169,7 +171,7 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = gridColor;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -301,6 +303,24 @@ document.addEventListener('keydown', e => {
   updateHUD();
 });
 
+// save = false al cargar, para seguir el tema del sistema mientras no haya elección guardada.
+function applyTheme(theme, save = true) {
+  document.documentElement.dataset.theme = theme;
+  if (save) {
+    try { localStorage.setItem('tetris-theme', theme); } catch (e) { /* almacenamiento no disponible */ }
+  }
+  themeBtn.textContent = theme === 'dark' ? 'Modo claro' : 'Modo oscuro';
+  gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim();
+  // El loop no corre en pausa ni tras game over, así que se repinta aquí.
+  if (current) draw();
+}
+
 restartBtn.addEventListener('click', init);
 
+themeBtn.addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  themeBtn.blur(); // evita que Space vuelva a activar el botón además del hard drop
+});
+
+applyTheme(document.documentElement.dataset.theme || 'dark', false);
 init();
