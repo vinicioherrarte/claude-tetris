@@ -48,7 +48,7 @@
             <li><kbd>↑</kbd> rotar</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd><kbd>Esc</kbd> pausa</li>
           </ul>
         </div>
 
@@ -60,7 +60,25 @@
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
-        <button id="restart-btn">Reiniciar</button>
+
+        <div id="menu-main" class="menu">
+          <button id="resume-btn" class="primary" type="button">Reanudar</button>
+          <button id="restart-btn" type="button">Reiniciar</button>
+          <button id="controls-btn" type="button">Ver controles</button>
+          <button id="level-btn" type="button">Nivel inicial: 1</button>
+        </div>
+
+        <div id="menu-controls" class="menu hidden">
+          <ul class="menu-keys">
+            <li><span><kbd>←</kbd><kbd>→</kbd></span>Mover</li>
+            <li><span><kbd>↑</kbd><kbd>X</kbd></span>Rotar</li>
+            <li><span><kbd>↓</kbd></span>Bajar</li>
+            <li><span><kbd>Space</kbd></span>Caída</li>
+            <li><span><kbd>P</kbd><kbd>Esc</kbd></span>Pausa</li>
+          </ul>
+          <p class="menu-hint"><kbd>↑</kbd><kbd>↓</kbd> navegar · <kbd>Enter</kbd> elegir · <kbd>Esc</kbd> volver</p>
+          <button id="back-btn" type="button">Volver</button>
+        </div>
       </div>
     </div>
   </div>

@@ -27,6 +27,12 @@ const PIECES = [
 ];
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
+const MAX_START_LEVEL = 10;
+const RESUME_LOCK_MS = 300; // ignora teclas de juego un instante al reanudar
+
+function speedFor(lvl) {
+  return Math.max(100, 1000 - (lvl - 1) * 90);
+}
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -40,9 +46,17 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeBtn = document.getElementById('theme-btn');
+const menuMain = document.getElementById('menu-main');
+const menuControls = document.getElementById('menu-controls');
+const resumeBtn = document.getElementById('resume-btn');
+const controlsBtn = document.getElementById('controls-btn');
+const levelBtn = document.getElementById('level-btn');
+const backBtn = document.getElementById('back-btn');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let gridColor = '#22222e';
+let startLevel = 1;
+let inputLockUntil = 0;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -108,8 +122,8 @@ function clearLines() {
   if (cleared) {
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
-    level = Math.floor(lines / 10) + 1;
-    dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+    level = startLevel + Math.floor(lines / 10);
+    dropInterval = speedFor(level);
     updateHUD();
   }
 }
@@ -225,20 +239,108 @@ function endGame() {
   cancelAnimationFrame(animId);
   overlayTitle.textContent = 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
+  resumeBtn.classList.add('hidden');
+  setView('main');
+  // No se enfoca ningún botón aquí: un Space del hard drop soltado
+  // podría activar "Reiniciar" al instante.
   overlay.classList.remove('hidden');
+}
+
+function updateLevelLabel() {
+  levelBtn.textContent = `Nivel inicial: ${startLevel}`;
+}
+
+function cycleStartLevel() {
+  startLevel = startLevel % MAX_START_LEVEL + 1;
+  updateLevelLabel();
+}
+
+function setView(name) {
+  menuMain.classList.toggle('hidden', name !== 'main');
+  menuControls.classList.toggle('hidden', name !== 'controls');
+}
+
+function showPauseMenu() {
+  overlayTitle.textContent = 'PAUSA';
+  overlayScore.textContent = '';
+  resumeBtn.classList.remove('hidden');
+  setView('main');
+  overlay.classList.remove('hidden');
+  resumeBtn.focus();
+}
+
+function showControls() {
+  setView('controls');
+  backBtn.focus();
+}
+
+function showMainMenu() {
+  setView('main');
+  controlsBtn.focus();
+}
+
+function hideOverlay() {
+  if (overlay.contains(document.activeElement)) document.activeElement.blur();
+  overlay.classList.add('hidden');
+}
+
+function resumeGame() {
+  if (!paused) return;
+  paused = false;
+  hideOverlay();
+  inputLockUntil = performance.now() + RESUME_LOCK_MS;
+  lastTime = performance.now();
+  loop(lastTime);
 }
 
 function togglePause() {
   if (gameOver) return;
-  paused = !paused;
-  if (!paused) {
-    lastTime = performance.now();
-    loop(lastTime);
-  } else {
-    cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    overlay.classList.remove('hidden');
+  if (paused) {
+    resumeGame();
+    return;
+  }
+  paused = true;
+  cancelAnimationFrame(animId);
+  showPauseMenu();
+}
+
+// Con el menú abierto, las flechas navegan el menú y no mueven piezas.
+function moveMenuFocus(dir) {
+  const items = Array.from(overlay.querySelectorAll('.menu:not(.hidden) button:not(.hidden)'));
+  if (!items.length) return;
+  const i = items.indexOf(document.activeElement);
+  const next = i === -1
+    ? (dir > 0 ? 0 : items.length - 1)
+    : (i + dir + items.length) % items.length;
+  items[next].focus();
+}
+
+function handlePauseKey(e) {
+  switch (e.code) {
+    case 'KeyP':
+      if (!e.repeat) togglePause();
+      break;
+    case 'Escape':
+      if (e.repeat) break;
+      if (!menuControls.classList.contains('hidden')) showMainMenu();
+      else togglePause();
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      moveMenuFocus(-1);
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      moveMenuFocus(1);
+      break;
+    case 'ArrowLeft':
+    case 'ArrowRight':
+      e.preventDefault();
+      break;
+    case 'Space':
+      // Space solo activa un botón enfocado; en otro caso no hace hard drop ni scroll.
+      if (!(e.target instanceof HTMLButtonElement)) e.preventDefault();
+      break;
   }
 }
 
@@ -264,23 +366,28 @@ function init() {
   board = createBoard();
   score = 0;
   lines = 0;
-  level = 1;
+  level = startLevel;
   paused = false;
   gameOver = false;
-  dropInterval = 1000;
+  dropInterval = speedFor(level);
   dropAccum = 0;
   lastTime = performance.now();
+  inputLockUntil = 0;
   next = randomPiece();
   spawn();
   updateHUD();
-  overlay.classList.add('hidden');
+  hideOverlay();
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'KeyP') { togglePause(); return; }
-  if (paused || gameOver) return;
+  if (paused) { handlePauseKey(e); return; }
+  if (e.code === 'KeyP' || e.code === 'Escape') {
+    if (!e.repeat) togglePause();
+    return;
+  }
+  if (gameOver || performance.now() < inputLockUntil) return;
   switch (e.code) {
     case 'ArrowLeft':
       if (!collide(current.shape, current.x - 1, current.y)) current.x--;
@@ -316,6 +423,10 @@ function applyTheme(theme, save = true) {
 }
 
 restartBtn.addEventListener('click', init);
+resumeBtn.addEventListener('click', resumeGame);
+controlsBtn.addEventListener('click', showControls);
+backBtn.addEventListener('click', showMainMenu);
+levelBtn.addEventListener('click', cycleStartLevel);
 
 themeBtn.addEventListener('click', () => {
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
@@ -323,4 +434,5 @@ themeBtn.addEventListener('click', () => {
 });
 
 applyTheme(document.documentElement.dataset.theme || 'dark', false);
+updateLevelLabel();
 init();

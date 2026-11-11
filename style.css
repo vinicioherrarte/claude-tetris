@@ -192,20 +192,80 @@ kbd {
   color: var(--value);
 }
 
-#restart-btn {
-  margin-top: 8px;
-  background: var(--accent);
-  color: var(--on-accent);
-  border: none;
-  border-radius: 6px;
-  padding: 10px 28px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 1px;
-  transition: background 0.15s;
+#overlay-score:empty {
+  display: none;
 }
 
-#restart-btn:hover {
+.hidden {
+  display: none !important;
+}
+
+/* ---- Menú de pausa ---- */
+.menu {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu button {
+  width: 100%;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.menu button:hover,
+.menu button:focus-visible {
+  outline: none;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.menu button.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+.menu button.primary:hover,
+.menu button.primary:focus-visible {
   background: var(--accent-hover);
+  color: var(--on-accent);
+  border-color: var(--accent-hover);
+}
+
+.menu-keys {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.menu-keys li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu-keys li span {
+  display: flex;
+  gap: 4px;
+}
+
+.menu-hint {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
 }
