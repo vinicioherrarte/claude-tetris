@@ -4,16 +4,34 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
-  null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#7986cb', // J - indigo
-  '#ffb74d', // L - orange
-];
+// Cada skin define su paleta (índice 1 = I, 2 = O, 3 = T, 4 = S, 5 = Z, 6 = J, 7 = L)
+// y la función que dibuja una celda. drawCell recibe coordenadas en píxeles.
+const SKINS = {
+  retro: {
+    label: 'Retro',
+    colors: [null, '#4dd0e1', '#ffd54f', '#ba68c8', '#81c784', '#e57373', '#7986cb', '#ffb74d'],
+    drawCell: drawRetroCell,
+  },
+  neon: {
+    label: 'Neón',
+    colors: [null, '#00f0ff', '#fff200', '#d400ff', '#39ff14', '#ff2a6d', '#3d7bff', '#ff8c00'],
+    drawCell: drawNeonCell,
+  },
+  pastel: {
+    label: 'Pastel',
+    colors: [null, '#a8e6ef', '#fff1a8', '#d7b8ef', '#bfeec4', '#f7b2b2', '#b9c3f2', '#ffd1a3'],
+    drawCell: drawPastelCell,
+  },
+  pixel: {
+    label: 'Pixel art',
+    colors: [null, '#00c8f8', '#f8d000', '#b040e0', '#48d048', '#f04848', '#4060f0', '#f89030'],
+    drawCell: drawPixelCell,
+  },
+};
+
+const SKIN_KEY = 'tetris-skin';
+let activeSkin = SKINS.retro;
+let COLORS = activeSkin.colors;
 
 const PIECES = [
   null,
@@ -40,6 +58,7 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeBtn = document.getElementById('theme-btn');
+const skinSelect = document.getElementById('skin-select');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let gridColor = '#22222e';
@@ -160,14 +179,80 @@ function updateHUD() {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  activeSkin.drawCell(context, x * size, y * size, size, COLORS[colorIndex]);
   context.globalAlpha = 1;
+}
+
+// ---- Funciones de dibujo por skin ----
+
+// Retro: bloque cuadrado de color plano con franja clara superior.
+function drawRetroCell(ctx, px, py, s, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 1, py + 1, s - 2, s - 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fillRect(px + 1, py + 1, s - 2, 4);
+}
+
+// Neon: relleno con shadowBlur del mismo color y núcleo claro.
+function drawNeonCell(ctx, px, py, s, color) {
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 3, py + 3, s - 6, s - 6);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillRect(px + 8, py + 8, s - 16, s - 16);
+}
+
+// Pastel: rectángulo redondeado con brillo superior y borde suave.
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawPastelCell(ctx, px, py, s, color) {
+  const x = px + 2, y = py + 2, w = s - 4, r = s * 0.28;
+  roundRectPath(ctx, x, y, w, w, r);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  roundRectPath(ctx, x + 3, y + 3, w - 6, (w - 6) * 0.35, r * 0.6);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fill();
+}
+
+// Pixel art: bisel de 6x6 píxeles (L = luz, D = sombra, . = color base) y dos puntos de textura.
+const PIXEL_PATTERN = [
+  'LLLLLD',
+  'L....D',
+  'L.L..D',
+  'L..D.D',
+  'L....D',
+  'DDDDDD',
+];
+
+function drawPixelCell(ctx, px, py, s, color) {
+  const inner = s - 2;
+  const p = Math.floor(inner / 6);
+  const off = Math.floor((inner - p * 6) / 2);
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 1, py + 1, inner, inner);
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      const ch = PIXEL_PATTERN[r][c];
+      if (ch === '.') continue;
+      ctx.fillStyle = ch === 'L' ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.3)';
+      ctx.fillRect(px + 1 + off + c * p, py + 1 + off + r * p, p, p);
+    }
+  }
 }
 
 function drawGrid() {
@@ -303,6 +388,13 @@ document.addEventListener('keydown', e => {
   updateHUD();
 });
 
+function refreshCanvas() {
+  gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim();
+  // El loop no corre en pausa ni tras game over, así que se repinta aquí.
+  if (current) draw();
+  if (next) drawNext();
+}
+
 // save = false al cargar, para seguir el tema del sistema mientras no haya elección guardada.
 function applyTheme(theme, save = true) {
   document.documentElement.dataset.theme = theme;
@@ -310,9 +402,19 @@ function applyTheme(theme, save = true) {
     try { localStorage.setItem('tetris-theme', theme); } catch (e) { /* almacenamiento no disponible */ }
   }
   themeBtn.textContent = theme === 'dark' ? 'Modo claro' : 'Modo oscuro';
-  gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim();
-  // El loop no corre en pausa ni tras game over, así que se repinta aquí.
-  if (current) draw();
+  refreshCanvas();
+}
+
+function applySkin(id, save = true) {
+  const skinId = SKINS[id] ? id : 'retro';
+  activeSkin = SKINS[skinId];
+  COLORS = activeSkin.colors;
+  document.documentElement.dataset.skin = skinId;
+  if (save) {
+    try { localStorage.setItem(SKIN_KEY, skinId); } catch (e) { /* almacenamiento no disponible */ }
+  }
+  skinSelect.value = skinId;
+  refreshCanvas();
 }
 
 restartBtn.addEventListener('click', init);
@@ -322,5 +424,16 @@ themeBtn.addEventListener('click', () => {
   themeBtn.blur(); // evita que Space vuelva a activar el botón además del hard drop
 });
 
+skinSelect.addEventListener('change', () => {
+  applySkin(skinSelect.value);
+  skinSelect.blur(); // evita que las teclas de juego cambien también la opción del selector
+});
+
+// Las flechas y Space siguen llegando al juego; aquí solo se evita que cambien la opción.
+skinSelect.addEventListener('keydown', e => {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+});
+
 applyTheme(document.documentElement.dataset.theme || 'dark', false);
+applySkin(document.documentElement.dataset.skin || 'retro', false);
 init();
