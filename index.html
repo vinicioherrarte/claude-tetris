@@ -60,6 +60,19 @@
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
+        <p id="overlay-rank" class="rank-msg"></p>
+        <section id="records" class="records">
+          <p class="label">TOP 5</p>
+          <table class="records-table">
+            <thead>
+              <tr><th>#</th><th>Nombre</th><th class="num">Puntos</th><th class="num">Líneas</th></tr>
+            </thead>
+            <tbody id="records-body"></tbody>
+          </table>
+          <p id="records-stats" title="Combo: piezas seguidas que completan líneas"></p>
+          <button id="reset-records-btn" type="button" class="ghost-btn">Borrar récords</button>
+        </section>
+        <button id="save-btn" type="button" class="ghost-btn hidden">Guardar nombre</button>
         <button id="restart-btn">Reiniciar</button>
       </div>
     </div>
