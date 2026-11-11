@@ -39,6 +39,27 @@
   --on-accent: #ffffff;
 }
 
+/* ---- Skin neón: fondo negro. Va después de los temas para sobrescribirlos. ---- */
+:root[data-skin="neon"] {
+  --bg: #000000;
+  --text: #e8e8ff;
+  --board-bg: #000000;
+  --board-border: #00f0ff;
+  --shadow: rgba(0, 240, 255, 0.35);
+  --grid: #15152e;
+  --label: #5a5a9a;
+  --value: #00f0ff;
+  --muted: #8080b0;
+  --kbd-bg: #0c0c1e;
+  --kbd-border: #00f0ff;
+  --kbd-text: #c0c0ff;
+  --overlay-bg: rgba(0, 0, 0, 0.8);
+  --danger: #ff2a6d;
+  --accent: #ff2a6d;
+  --accent-hover: #ff5c8a;
+  --on-accent: #000000;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -135,6 +156,19 @@ kbd {
   font-size: 11px;
   font-family: inherit;
   color: var(--kbd-text);
+}
+
+/* ---- Selector de skin ---- */
+#skin-select {
+  width: 100%;
+  background: var(--board-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 /* ---- Botón de tema ---- */

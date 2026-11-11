@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tetris</title>
   <script>
-    // Aplica el tema antes del primer render para evitar un parpadeo.
+    // Aplica tema y skin antes del primer render para evitar un parpadeo.
     (function () {
       var theme = null;
       try { theme = localStorage.getItem('tetris-theme'); } catch (e) {}
@@ -13,6 +13,11 @@
         theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
       }
       document.documentElement.dataset.theme = theme;
+
+      var skin = null;
+      try { skin = localStorage.getItem('tetris-skin'); } catch (e) {}
+      if (['retro', 'neon', 'pastel', 'pixel'].indexOf(skin) === -1) skin = 'retro';
+      document.documentElement.dataset.skin = skin;
     })();
   </script>
   <link rel="stylesheet" href="style.css" />
@@ -50,6 +55,16 @@
             <li><kbd>Space</kbd> caída</li>
             <li><kbd>P</kbd><kbd>Esc</kbd> pausa</li>
           </ul>
+        </div>
+
+        <div class="panel-section">
+          <label class="label" for="skin-select">APARIENCIA</label>
+          <select id="skin-select">
+            <option value="retro">Retro</option>
+            <option value="neon">Neón</option>
+            <option value="pastel">Pastel</option>
+            <option value="pixel">Pixel art</option>
+          </select>
         </div>
 
         <button id="theme-btn" type="button">Modo claro</button>
